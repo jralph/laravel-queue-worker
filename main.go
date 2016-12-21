@@ -76,10 +76,6 @@ func runCommand(id int, wg sync.WaitGroup, artisanPath string, queue string, del
 	}
 }
 
-func printOutput(output string) {
-	fmt.Printf(" ==> Output: %s\n", output)
-}
-
 func printError(err error) {
 	fmt.Println(fmt.Sprintf(" ==> Error: %s\n", err.Error()))
 }
