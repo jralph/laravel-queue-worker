@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/pborman/getopt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -21,12 +23,14 @@ func main() {
 	timeout := getopt.IntLong("timeout", 't', 60, "The number of seconds a child process can run for.")
 	tries := getopt.IntLong("tries", 'r', 0, "The number of times to attempt a job.")
 
+	staggered := getopt.BoolLong("staggered", 'l', "", "Stagger the starting of processes.")
+
 	getopt.Parse()
 
-	runCommands(*artisanPath, *numberOfProcesses, *queue, *delay, *memory, *sleep, *timeout, *tries)
+	runCommands(*artisanPath, *numberOfProcesses, *queue, *delay, *memory, *sleep, *timeout, *tries, *staggered)
 }
 
-func runCommands(artisanPath string, numProcs int, queue string, delay int, memory int, sleep int, timeout int, tries int) {
+func runCommands(artisanPath string, numProcs int, queue string, delay int, memory int, sleep int, timeout int, tries int, staggered bool) {
 	fmt.Println(" ==> Starting processes...")
 
 	var wg sync.WaitGroup
@@ -34,6 +38,10 @@ func runCommands(artisanPath string, numProcs int, queue string, delay int, memo
 	wg.Add(numProcs)
 
 	for i := 0; i < numProcs; i++ {
+		if staggered {
+			time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
+		}
+
 		go runCommand(i, wg, artisanPath, queue, delay, memory, sleep, timeout, tries)
 	}
 
