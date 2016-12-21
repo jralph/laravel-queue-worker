@@ -63,6 +63,7 @@ func runCommand(id int, wg sync.WaitGroup, artisanPath string, queue string, del
 
 		printError(errors.New(fmt.Sprintf("Process %d stopped due to an error.", id)))
 	} else {
+		fmt.Printf("\033[31m ==> Process [%d] stopped, possibly due to queue restart signal. Restarting...", id)
 		runCommand(id, wg, artisanPath, queue, delay, memory, sleep, timeout, tries)
 	}
 }
