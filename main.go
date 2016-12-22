@@ -16,14 +16,14 @@ func main() {
 	artisanPath := getopt.StringLong("artisan", 'a', "artisan", "The path to artisan executable.")
 	numberOfProcesses := getopt.IntLong("processes", 'p', 5, "The number of works to run.")
 
-	queue := getopt.StringLong("queue", 'q', "default", "The queue to listen on.")
-	delay := getopt.IntLong("delay", 'd', 0, "Amount of time to delay failed jobs.")
-	memory := getopt.IntLong("memory", 'm', 128, "The memory limit in megabytes.")
-	sleep := getopt.IntLong("sleep", 's', 3, "Number of seconds to sleep when no jobs are available.")
-	timeout := getopt.IntLong("timeout", 't', 60, "The number of seconds a child process can run for.")
-	tries := getopt.IntLong("tries", 'r', 0, "The number of times to attempt a job.")
+	queue := getopt.StringLong("queue", 0, "default", "The queue to listen on.")
+	delay := getopt.IntLong("delay", 0, 0, "Amount of time to delay failed jobs.")
+	memory := getopt.IntLong("memory", 0, 128, "The memory limit in megabytes.")
+	sleep := getopt.IntLong("sleep", 0, 3, "Number of seconds to sleep when no jobs are available.")
+	timeout := getopt.IntLong("timeout", 0, 60, "The number of seconds a child process can run for.")
+	tries := getopt.IntLong("tries", 0, 0, "The number of times to attempt a job.")
 
-	staggered := getopt.BoolLong("staggered", 'l', "", "Stagger the starting of processes.")
+	staggered := getopt.BoolLong("staggered", 's', "", "Stagger the starting of processes.")
 
 	getopt.Parse()
 
@@ -33,22 +33,22 @@ func main() {
 func runCommands(artisanPath string, numProcs int, queue string, delay int, memory int, sleep int, timeout int, tries int, staggered bool) {
 	fmt.Println(" ==> Starting processes...")
 
-	var wg sync.WaitGroup
+	var waitGroup sync.WaitGroup
 
-	wg.Add(numProcs)
+	waitGroup.Add(numProcs)
 
 	for i := 0; i < numProcs; i++ {
-		if staggered {
-			time.Sleep(time.Duration(rand.Intn(10)) * time.Second)
-		}
-
-		go runCommand(i, wg, artisanPath, queue, delay, memory, sleep, timeout, tries)
+		go runCommand(i, waitGroup, artisanPath, queue, delay, memory, sleep, timeout, tries, staggered)
 	}
 
-	wg.Wait()
+	waitGroup.Wait()
 }
 
-func runCommand(id int, wg sync.WaitGroup, artisanPath string, queue string, delay int, memory int, sleep int, timeout int, tries int) {
+func runCommand(id int, waitGroup sync.WaitGroup, artisanPath string, queue string, delay int, memory int, sleep int, timeout int, tries int, staggered bool) {
+	if staggered {
+		time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
+	}
+
 	command := exec.Command(
 		"php",
 		artisanPath,
@@ -67,15 +67,15 @@ func runCommand(id int, wg sync.WaitGroup, artisanPath string, queue string, del
 	command.Stderr = os.Stderr
 
 	if err := command.Run(); err != nil {
-		defer wg.Done()
+		defer waitGroup.Done()
 
 		printError(errors.New(fmt.Sprintf("Process %d stopped due to an error.", id)))
 	} else {
-		fmt.Printf("\033[31m ==> Process [%d] stopped, possibly due to queue restart signal. Restarting...\n\033[37m", id)
-		runCommand(id, wg, artisanPath, queue, delay, memory, sleep, timeout, tries)
+		fmt.Printf("\033[31m ==> Process [%d] stopped, possibly due to queue restart signal. Restarting...\033[37m\n", id)
+		runCommand(id, waitGroup, artisanPath, queue, delay, memory, sleep, timeout, tries, staggered)
 	}
 }
 
 func printError(err error) {
-	fmt.Println(fmt.Sprintf(" ==> Error: %s\n", err.Error()))
+	fmt.Println(fmt.Sprintf("\033[31m ==> Error: %s \033[37m\n", err.Error()))
 }
