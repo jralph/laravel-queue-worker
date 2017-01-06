@@ -28,6 +28,7 @@ Usage: laravel-queue-worker [-a value] [-d value] [-m value] [-p value] [-q valu
      --tries=value      The number of times to attempt a job. [Default: 0]
  -s, --sleep=value      Number of seconds to sleep when no jobs are available. [Default: 3]
      --timeout=value    The number of seconds a child process can run for. [Default: 60]
+     --tries=value      The number of times to retry a failed job. [Default: 0]
 ```
 
 ### Example
