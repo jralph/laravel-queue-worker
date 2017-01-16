@@ -63,7 +63,7 @@ func runCommands(
 	for i := 0; i < numProcs; i++ {
 		go runCommand(
 			i,
-			waitGroup,
+			&waitGroup,
 			artisanPath,
 			queue,
 			delay,
@@ -84,7 +84,7 @@ func runCommands(
  */
 func runCommand(
 	id int,
-	waitGroup sync.WaitGroup,
+	waitGroup *sync.WaitGroup,
 	artisanPath string,
 	queue string,
 	delay int,
